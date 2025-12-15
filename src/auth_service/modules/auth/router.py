@@ -7,11 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth_service.core.dependencies import get_current_user
 from auth_service.db.session import get_db
 from auth_service.modules.auth.models import User
-from auth_service.modules.auth.repository import UserRepository
+from auth_service.modules.auth.repository import (
+    RefreshTokenRepository,
+    UserRepository,
+)
 from auth_service.modules.auth.schemas import (
+    RefreshRequest,
     UserCreate,
     UserLogin,
     UserLoginReturn,
+    UserRefreshToken,
     UserResponse,
 )
 from auth_service.modules.auth.service import AuthService
@@ -39,10 +44,14 @@ async def register_user(data: UserCreate, db: Session):
 
 @router.post('/login', response_model=UserLoginReturn)
 async def login(data: UserLogin, db: Session):
-    service = AuthService(UserRepository(db))
+    service = AuthService(UserRepository(db), RefreshTokenRepository(db))
     try:
-        return await service.login(data)
-    except ValueError:
+        result = await service.login(data)
+
+        print('LOGIN RETURN:', result)
+        return result
+    except Exception as e:
+        print('LOGIN EXCEPTION:', repr(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Invalid credentials',
@@ -52,3 +61,23 @@ async def login(data: UserLogin, db: Session):
 @router.get('/me', response_model=UserResponse)
 async def me(current_user: Current_User):
     return current_user
+
+
+@router.post('/refresh', response_model=UserRefreshToken)
+async def refresh(data: RefreshRequest, db: Session):
+    service = AuthService(UserRepository(db), RefreshTokenRepository(db))
+
+    try:
+        return await service.refresh(data.refresh_token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Invalid refresh token',
+        )
+
+
+@router.post('/logout', status_code=status.HTTP_204_NO_CONTENT)
+async def logout(data: RefreshRequest, db: Session):
+    service = AuthService(UserRepository(db), RefreshTokenRepository(db))
+
+    await service.logout(data.refresh_token)

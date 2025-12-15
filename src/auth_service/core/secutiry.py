@@ -23,23 +23,29 @@ def create_token(
 
     payload = {'sub': str(subject), 'type': token_type, 'exp': expire}
 
-    return jwt.encode(
+    token = jwt.encode(
         payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
     )
 
+    return token, expire
+
 
 def create_access_token(user_id: int) -> str:
-    return create_token(
+    token, _ = create_token(
         user_id,
         'access',
         timedelta(minutes=settings.access_token_expire_minutes),
     )
 
+    return token
+
 
 def create_refresh_token(user_id: int) -> str:
-    return create_token(
+    token, expire = create_token(
         user_id, 'refresh', timedelta(days=settings.refresh_token_expire_days)
     )
+
+    return token, expire
 
 
 def decode_token(token: str) -> dict:

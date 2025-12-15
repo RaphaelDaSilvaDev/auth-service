@@ -24,3 +24,14 @@ class UserLoginReturn(BaseModel):
     token_type: str = 'bearer'
 
     model_config = {'from_attributes': True}
+
+
+class UserRefreshToken(BaseModel):
+    access_token: str
+    token_type: str = 'bearer'
+
+    model_config = {'from_attributes': True}
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
