@@ -1,6 +1,6 @@
 # Auth Service
 
-Servico de Autenticação desenvolvido com FastAPI, PostgresSQL e JWT, focando em arquitetura limpa e padrões de projeto.
+Este projeto implementa um serviço de autenticação moderno utilizando FastAPI, JWT, PostgreSQL, Docker e SQLAlchemy Async, seguindo boas práticas de arquitetura e segurança.
 
 ## 🚀 Stack
 - Python 3.14
@@ -9,19 +9,98 @@ Servico de Autenticação desenvolvido com FastAPI, PostgresSQL e JWT, focando e
 - SQLAlchemy
 - Docker & Docker Compose
 - JWT
+- Pydantic
+- Alembic
 
 ## 📁 Estrutura do projeto
 ```text
-app/
- ├── core/        # Configurações, segurança, exceptions
- ├── db/          # Sessão e módulos base
- ├── modules/     # Módulos da aplicação (auth, users, etc.)
+auth_service/
+├── core/ # Segurança, JWT, hashing, configurações
+├── db/ # Conexão e sessão com o banco
+├── modules/
+│ └── auth/
+│    ├── models.py # Models SQLAlchemy
+│    ├── schemas.py # Schemas Pydantic
+│    ├── repository.py # Acesso a dados
+│    ├── service.py # Regras de negócio
+│    └── router.py # Rotas FastAPI
+└── main.py
 ```
+📌 Controllers (routers) não contêm regra de negócio.
+📌 Services concentram toda a lógica de autenticação.
+📌 Repositories lidam exclusivamente com persistência.
+
+## 🔐 Fluxo de Autenticação
+```text
+1️⃣ Registro
+Cria usuário com senha hasheada (bcrypt)
+Valida e-mail único
+
+2️⃣ Login
+Valida credenciais
+Gera access token (JWT)
+Gera refresh token (JWT)
+Persiste o refresh token no banco
+
+3️⃣ Access Token
+Stateless
+Curta duração
+Usado para acessar rotas protegidas
+
+4️⃣ Refresh Token
+Stateful
+Longa duração
+Persistido no banco
+Usado para renovar sessão
+
+5️⃣ Refresh
+Valida JWT
+Valida tipo do token (refresh)
+Verifica existência no banco
+Verifica expiração
+Retorna novo access token
+
+6️⃣ Logout
+Revoga o refresh token no banco
+Access token expira naturalmente
+```
+## 🔑 Rotas
+```text
+Método	Rota	Descrição
+POST	/auth/register	Registro de usuário
+POST	/auth/login	Login e geração de tokens
+GET	/auth/me	Dados do usuário autenticado
+POST	/auth/refresh	Gera novo access token
+POST	/auth/logout	Revoga refresh token
+```
+
+##🧪 Segurança
+```text
+Hash de senha com bcrypt
+JWT assinado
+Validação de tipo de token
+Expiração controlada
+Tokens sensíveis não armazenados em plaintext no client
+```
+
 ## ▶️ Executando o projeto
+``` text
 Requirements
 * Docker
 * Docker Compose
+```
 
 ```text
+# Subir containers (Aplicação e Banco de dados) e executar migrations
 docker-compose up --build
 ```
+
+```text
+Api disponível em: http://localhost:8000
+Documentação em: http://localhost:8000/docs
+```
+---
+<div align="center">
+Feito por Raphael da Silva 🚀 <br/>
+
+</div>
