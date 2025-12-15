@@ -6,7 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth_service.db.session import get_db
 from auth_service.modules.auth.repository import UserRepository
-from auth_service.modules.auth.schemas import UserCreate, UserResponse
+from auth_service.modules.auth.schemas import (
+    UserCreate,
+    UserLogin,
+    UserLoginReturn,
+    UserResponse,
+)
 from auth_service.modules.auth.service import AuthService
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -26,4 +31,16 @@ async def register_user(data: UserCreate, db: Session):
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+
+
+@router.post('/login', response_model=UserLoginReturn)
+async def login(data: UserLogin, db: Session):
+    service = AuthService(UserRepository(db))
+    try:
+        return await service.login(data)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Invalid credentials',
         )

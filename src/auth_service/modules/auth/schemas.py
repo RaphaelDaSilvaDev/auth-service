@@ -11,3 +11,16 @@ class UserResponse(BaseModel):
     email: EmailStr
 
     model_config = {'from_attributes': True}
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserLoginReturn(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = 'bearer'
+
+    model_config = {'from_attributes': True}

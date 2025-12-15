@@ -1,7 +1,16 @@
-from auth_service.core.secutiry import hash_password
+from auth_service.core.secutiry import (
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    verify_password,
+)
 from auth_service.modules.auth.models import User
 from auth_service.modules.auth.repository import UserRepository
-from auth_service.modules.auth.schemas import UserCreate
+from auth_service.modules.auth.schemas import (
+    UserCreate,
+    UserLogin,
+    UserLoginReturn,
+)
 
 
 class AuthService:
@@ -19,3 +28,17 @@ class AuthService:
         )
 
         return await self.repository.create(user)
+
+    async def login(self, data: UserLogin) -> UserLoginReturn:
+        user = await self.repository.get_by_email(data.email)
+
+        if not user:
+            raise ValueError('Invalid credentials')
+
+        if not verify_password(data.password, user.password_hash):
+            raise ValueError('Invalid credentials')
+
+        return UserLoginReturn(
+            access_token=create_access_token(user.id),
+            refresh_token=create_refresh_token(user.id),
+        )
