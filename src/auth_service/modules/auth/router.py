@@ -4,7 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from auth_service.core.dependencies import get_current_user
 from auth_service.db.session import get_db
+from auth_service.modules.auth.models import User
 from auth_service.modules.auth.repository import UserRepository
 from auth_service.modules.auth.schemas import (
     UserCreate,
@@ -17,6 +19,7 @@ from auth_service.modules.auth.service import AuthService
 router = APIRouter(prefix='/auth', tags=['auth'])
 
 Session = Annotated[AsyncSession, Depends(get_db)]
+Current_User = Annotated[User, Depends(get_current_user)]
 
 
 @router.post(
@@ -44,3 +47,8 @@ async def login(data: UserLogin, db: Session):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Invalid credentials',
         )
+
+
+@router.get('/me', response_model=UserResponse)
+async def me(current_user: Current_User):
+    return current_user

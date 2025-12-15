@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from jose import jwt
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from auth_service.core.config import settings
@@ -21,7 +21,7 @@ def create_token(
 ) -> str:
     expire = datetime.now(timezone.utc) + expires_delta
 
-    payload = {'sub': subject, 'type': token_type, 'exp': expire}
+    payload = {'sub': str(subject), 'type': token_type, 'exp': expire}
 
     return jwt.encode(
         payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
@@ -40,3 +40,15 @@ def create_refresh_token(user_id: int) -> str:
     return create_token(
         user_id, 'refresh', timedelta(days=settings.refresh_token_expire_days)
     )
+
+
+def decode_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+        return payload
+    except JWTError:
+        raise ValueError('Invalid token')
