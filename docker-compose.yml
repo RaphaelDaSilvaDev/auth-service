@@ -11,6 +11,8 @@ services:
       - .env
     depends_on:
       - db
+    networks:
+      - backend
 
   db:
     image: postgres:16
@@ -23,6 +25,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
 
 volumes:
   postgres_data:
+
+networks:
+  backend:
+    external: true

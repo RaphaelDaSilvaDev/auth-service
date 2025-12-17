@@ -9,7 +9,9 @@ from auth_service.db.session import get_db
 from auth_service.modules.auth.models import User
 from auth_service.modules.auth.repository import (
     RefreshTokenRepository,
+    TokenTypeRepository,
     UserRepository,
+    UserTokenVerificationRepository,
 )
 from auth_service.modules.auth.schemas import (
     RefreshRequest,
@@ -18,6 +20,7 @@ from auth_service.modules.auth.schemas import (
     UserLoginReturn,
     UserRefreshToken,
     UserResponse,
+    ValidateAccount,
 )
 from auth_service.modules.auth.service import AuthService
 
@@ -32,7 +35,11 @@ Current_User = Annotated[User, Depends(get_current_user)]
 )
 async def register_user(data: UserCreate, db: Session):
 
-    service = AuthService(UserRepository(db))
+    service = AuthService(
+        repository=UserRepository(db),
+        tokenTypeRepository=TokenTypeRepository(db),
+        userVerificationTokenRepository=UserTokenVerificationRepository(db),
+    )
     try:
         user = await service.register(data)
         return user
@@ -44,17 +51,18 @@ async def register_user(data: UserCreate, db: Session):
 
 @router.post('/login', response_model=UserLoginReturn)
 async def login(data: UserLogin, db: Session):
-    service = AuthService(UserRepository(db), RefreshTokenRepository(db))
+    service = AuthService(
+        repository=UserRepository(db),
+        refreshRepository=RefreshTokenRepository(db),
+    )
     try:
         result = await service.login(data)
 
-        print('LOGIN RETURN:', result)
         return result
     except Exception as e:
-        print('LOGIN EXCEPTION:', repr(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Invalid credentials',
+            detail=str(e),
         )
 
 
@@ -81,3 +89,19 @@ async def logout(data: RefreshRequest, db: Session):
     service = AuthService(UserRepository(db), RefreshTokenRepository(db))
 
     await service.logout(data.refresh_token)
+
+
+@router.post('/validate-account', status_code=status.HTTP_204_NO_CONTENT)
+async def validate_account(data: ValidateAccount, db: Session):
+    service = AuthService(
+        repository=UserRepository(db),
+        userVerificationTokenRepository=UserTokenVerificationRepository(db),
+    )
+
+    try:
+        await service.validate_account(data)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )

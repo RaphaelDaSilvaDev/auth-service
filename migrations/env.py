@@ -18,6 +18,8 @@ if config.config_file_name is not None:
 
 from src.auth_service.modules.auth.models import User 
 from src.auth_service.modules.auth.models import RefreshToken 
+from src.auth_service.modules.auth.models import UserTokenVerification
+from src.auth_service.modules.auth.models import TokenType
 
 # add your model's MetaData object here
 # for 'autogenerate' support

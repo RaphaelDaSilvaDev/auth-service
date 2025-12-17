@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    username: str
 
 
 class UserResponse(BaseModel):
@@ -35,3 +36,28 @@ class UserRefreshToken(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class VerifyEmailRabbitMQ(BaseModel):
+    type: str = 'verify_email'
+    email: EmailStr
+    name: str
+    code: str
+
+
+class ResetPasswordRabbitMQ(BaseModel):
+    type: str = 'reset_password'
+    email: EmailStr
+    name: str
+    token: str
+
+
+class ValidateAccount(BaseModel):
+    email: EmailStr
+    code: str
+
+
+class UserCreatedEvent(BaseModel):
+    user_id: int
+    email: EmailStr
+    username: str
